@@ -360,6 +360,44 @@ class RcsGrid:
             rcs_domain="power_phase",
         )
 
+    def arithmetic_db_subtract(self, other):
+        """Subtract in the dataset's dB display unit (dBsm or dBke).
+
+        Returns a grid whose dB display equals ``self_dB - other_dB``. For two
+        constant lines at 30 and 25 dBsm, the result displays as 5 dBsm. Phase
+        is meaningless for this magnitude-domain operation and is set to NaN.
+
+        Both grids must share the same ``default_log_unit`` (dBsm or dBke).
+        """
+        self._assert_compatible(other)
+        unit_a = self.default_log_unit()
+        unit_b = other.default_log_unit()
+        if unit_a != unit_b:
+            raise ValueError(
+                f"dB arithmetic requires matching log units; got {unit_a} vs {unit_b}"
+            )
+
+        freq_bcast = None
+        if unit_a.lower() == "dbke":
+            # rcs_power shape is (az, el, freq, pol); reshape freq so it
+            # broadcasts across the freq axis only.
+            freq_bcast = np.asarray(self.frequencies, dtype=float)[None, None, :, None]
+
+        db_a = self.linear_to_default_db(self.rcs_power, frequency_value=freq_bcast)
+        db_b = other.linear_to_default_db(other.rcs_power, frequency_value=freq_bcast)
+        diff_db = db_a - db_b
+        output_power = self.default_db_to_linear(diff_db, frequency_value=freq_bcast)
+
+        return self._new_grid(
+            self.azimuths,
+            self.elevations,
+            self.frequencies,
+            self.polarizations,
+            rcs_power=output_power,
+            rcs_phase=np.full(output_power.shape, np.nan, dtype=np.float32),
+            rcs_domain="power_phase",
+        )
+
     def align_to(self, other, mode="exact"):
         """Align this grid to another grid's axes.
 
@@ -830,6 +868,16 @@ class RcsGrid:
                 raise ValueError("frequency_value is required for dBke conversion")
             return self.linear_to_dbke(linear_value, frequency_value, eps=eps)
         return self.linear_to_dbsm(linear_value, eps=eps)
+
+    def default_db_to_linear(self, db_value, frequency_value=None):
+        """Inverse of ``linear_to_default_db`` — convert dB display values back
+        to linear power using the dataset's default log unit (dBsm or dBke).
+        """
+        if self.default_log_unit().lower() == "dbke":
+            if frequency_value is None:
+                raise ValueError("frequency_value is required for dBke conversion")
+            return self.dbke_to_linear(db_value, frequency_value)
+        return 10.0 ** (np.asarray(db_value, dtype=float) / 10.0)
 
     def axis_crop(
         self,

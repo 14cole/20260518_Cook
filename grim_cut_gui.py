@@ -376,6 +376,7 @@ class GrimCutWindow(DatasetOpsMixin, PlotOpsMixin, QMainWindow):
             ("Coherent ÷", "btn_coherent_div"),
             ("Incoherent +", "btn_incoherent_add"),
             ("Incoherent -", "btn_incoherent_sub"),
+            ("Δ dB", "btn_dbdiff"),
             ("Slice", "btn_slice"),
             ("Stats", "btn_stats"),
             ("Join", "btn_join"),
@@ -682,6 +683,7 @@ class GrimCutWindow(DatasetOpsMixin, PlotOpsMixin, QMainWindow):
         self.btn_coherent_div.clicked.connect(self._coherent_div_selected)
         self.btn_incoherent_add.clicked.connect(self._incoherent_add_selected)
         self.btn_incoherent_sub.clicked.connect(self._incoherent_sub_selected)
+        self.btn_dbdiff.clicked.connect(self._dbdiff_selected)
         self.btn_slice.clicked.connect(self._slice_selected)
         self.btn_stats.clicked.connect(self._statistics_selected)
         self.btn_join.clicked.connect(self._join_selected_datasets)

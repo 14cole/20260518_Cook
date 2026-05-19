@@ -1518,6 +1518,9 @@ class DatasetOpsMixin:
     def _incoherent_sub_selected(self) -> None:
         self._combine_datasets_sub("Incoherent -", "-", "incoherent_subtract")
 
+    def _dbdiff_selected(self) -> None:
+        self._combine_datasets_sub("Δ dB", "Δ", "arithmetic_db_subtract")
+
     def _join_selected_datasets(self) -> None:
         datasets = self._selected_datasets_ordered(
             use_selection_order=True,
